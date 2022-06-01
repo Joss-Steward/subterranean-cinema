@@ -1,0 +1,46 @@
+<script src="https://unpkg.com/vue@3"></script>
+
+<div id="app">
+    <button v-on:click="sendMessage('connect')">Connect</button>
+    <br/>
+    <button v-on:click="sendMessage('play')">Play</button>
+    <br/>
+    <button v-on:click="sendMessage('stop')">Stop</button>
+    <br/>
+</div>
+
+<script>
+    const { createApp } = Vue
+
+    createApp({
+        name: 'App',
+        data: function () {
+            return {
+                connection: null
+            }
+        },
+        methods: {
+            sendMessage: function (message) {
+                this.connection.send(message);
+            }
+        },
+        created: function () {
+            console.log("Starting connection to WebSocket Server")
+            this.connection = new WebSocket("ws://localhost:8080/join/1")
+
+            this.connection.onmessage = function (event) {
+                console.log("Received: ", event);
+            }
+
+            this.connection.onopen = function (event) {
+                console.log(event)
+                console.log("Successfully connected to the echo websocket server...")
+            }
+        }, 
+        computed: {
+            connected() {
+
+            }
+        }
+    }).mount('#app')
+</script>

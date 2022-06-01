@@ -14,11 +14,16 @@ start(_StartType, _StartArgs) ->
         {
             <<"localhost">>,
             [
-                {<<"/start/[:file]">>, theatre_start_handler, []},
-                {<<"/join/[:stream]">>, theatre_client_handler, []},
+                { <<"/start/[:file]">>,  theatre_start_handler, [] },
+                { <<"/join/[:stream]">>, theatre_client_handler, [] },
                 {
-                    <<"/">>, cowboy_static, 
-                    {priv_file, theatre, "static/index.html"}
+                    <<"/">>, cowboy_static, { priv_file, theatre, "static/index.html" }
+                },
+                {
+                    <<"/try">>, cowboy_static, { priv_file, theatre, "static/other.html" }
+                },
+                {
+                    <<"/media/[...]">>, cowboy_static, { priv_dir, theatre, "media" }
                 }
             ]
         }

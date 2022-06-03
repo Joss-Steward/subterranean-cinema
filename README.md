@@ -1,9 +1,7 @@
-theatre
-=====
+# Subterranean Cinema
 
-An OTP application
+Issue Tracker: [LINEAR](https://linear.app/subterranean-cinema/team/SUB/active)
 
-Build
------
+## How to use
 
-    $ rebar3 compile
+I dunno man, like, I dunno

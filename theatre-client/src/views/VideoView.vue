@@ -1,6 +1,6 @@
 <template>
     <div>
-        <video-player :options="videoOptions" />
+        <VideoPlayer :options="videoOptions" />
     </div>
 </template>
 
@@ -17,9 +17,10 @@ export default {
             videoOptions: {
                 autoplay: true,
                 controls: true,
+                fluid: true,
                 sources: [
                     {
-                        src:  'http://localhost:8080/media/ballard.mp4',
+                        src:  'http://localhost:8080/media/birdemic.mp4',
                         type: 'video/mp4'
                     }
                 ]

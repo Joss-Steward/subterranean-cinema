@@ -26,10 +26,23 @@ start_link() ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([]) ->
-    SupFlags = #{strategy => one_for_all,
-                 intensity => 0,
-                 period => 1},
-    ChildSpecs = [],
+    SupFlags = #{
+        strategy => one_for_all,
+        intensity => 0,
+        period => 1
+    },
+    ChildSpecs = [
+        #{
+            id => theatre_session_sup,
+            start => { theatre_session_sup, start_link, [] },
+            restart => permanent
+        },
+        #{
+			id => theatre_session_server, 
+			start => { theatre_session_server, start_link, [] }, 
+			restart => permanent
+		}
+    ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

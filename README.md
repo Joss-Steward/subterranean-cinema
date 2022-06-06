@@ -15,6 +15,8 @@ Frontend:
     - Vuex, because it seemed standard
     - Video.js, because it seemed standard
     - npm, as a build tool, because javascript
+    - [Tailwind CSS](https://tailwindcss.com), because all the others are for Vue 2
+        - See [Getting Started](https://tailwindcss.com/docs/guides/vite) for setup instructions
 
 ## How to use
 

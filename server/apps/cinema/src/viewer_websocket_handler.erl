@@ -33,17 +33,30 @@ websocket_init(State) ->
 	session:join(SessionPid, {?MODULE, notify, self()}),
     {[{text, <<"Joined Session~n">>}], State}.
 
-websocket_handle(Frame = {text, _}, State) ->
-	io:fwrite("ws message received: ~p~n", Frame),
+websocket_handle({text, <<"play", _/binary>>}, State) ->
+	io:fwrite("play message received~n"),
+	SessionPid = maps:get(session_pid, State),
+	session:play(SessionPid),
+    {[], State};
+websocket_handle({text, <<"pause", _/binary>>}, State) ->
+	io:fwrite("pause message received~n"),
+	SessionPid = maps:get(session_pid, State),
+	session:pause(SessionPid),
+    {[], State};
+websocket_handle(Frame = {text, Text}, State) ->
+	io:fwrite("Frame: ~s~n", [Text]),
     {[Frame], State};
 websocket_handle(_Frame, State) ->
     {ok, State}.
 
 websocket_info({notify, Message}, State) ->
     {[{text, Message}], State};
+websocket_info(ping, State) ->
+    {[ping], State};
 websocket_info(_Info, State) ->
 	io:fwrite("unexpected message: ~p~n", _Info),
     {[], State}.
 
 notify(Pid, Message) ->
+	Pid ! ping,
 	Pid ! {notify, Message}.

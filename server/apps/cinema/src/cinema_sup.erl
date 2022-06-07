@@ -3,7 +3,7 @@
 %% @end
 %%%-------------------------------------------------------------------
 
--module(theatre_sup).
+-module(cinema_sup).
 
 -behaviour(supervisor).
 
@@ -33,13 +33,18 @@ init([]) ->
     },
     ChildSpecs = [
         #{
-            id => theatre_session_sup,
-            start => { theatre_session_sup, start_link, [] },
+            id => session_manager,
+            start => { session_manager, start_link, [] },
             restart => permanent
         },
         #{
-			id => theatre_session_server, 
-			start => { theatre_session_server, start_link, [] }, 
+			id => session_sup, 
+			start => { session_sup, start_link, [] }, 
+			restart => permanent
+		},
+        #{
+			id => media_manager, 
+			start => { media_manager, start_link, [] }, 
 			restart => permanent
 		}
     ],

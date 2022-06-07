@@ -1,6 +1,6 @@
--sname theatre
+-sname cinema
 
--setcookie theatre_cookie
+-setcookie cinema_cookie
 
 +K true
 +A30

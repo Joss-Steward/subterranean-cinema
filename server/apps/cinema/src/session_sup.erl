@@ -1,4 +1,4 @@
--module(theatre_session_sup).
+-module(session_sup).
 -behaviour(supervisor).
 
 %% API
@@ -6,20 +6,20 @@
 
 %% Supervisor callbacks
 -export([init/1]).
--export([start_child/0, delete_child/1]).
+-export([start_child/2, delete_child/1]).
 
 -define(SHUTDOWN_TIMEOUT, 5000).
--define(WORKER(I), {I, {I, start_link, []}, temporary, ?SHUTDOWN_TIMEOUT, worker, [I]}).
 
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    Child = ?WORKER(theatre_session_statem),
+	Child = {session, {session, start_link, []}, 
+				temporary, ?SHUTDOWN_TIMEOUT, worker, [session]},
     {ok, {{simple_one_for_one, 3, 30}, [Child]}}.
 
-start_child() ->
-    supervisor:start_child(?MODULE, []).
+start_child(SessionID, MediaInfo) ->
+    supervisor:start_child(?MODULE, [{SessionID, MediaInfo}]).
 
 delete_child(Pid) ->
     ok = supervisor:terminate_child(?MODULE, Pid).

@@ -1,15 +1,16 @@
 <script setup>
-import Movies from '@/components/Movies/Movies.vue'
+import Item from '@/components/Media/Item.vue';
 </script>
 
 <template>
-	<div class="shadow-md w-1/2">
-		<Movies :movies="movies"></Movies>
-	</div>
+	<Item :media_id="media_id"></Item>
 </template>
 
 <script>
 export default {
+	props: {
+		media_id: String
+	},
 	data() {
 		return {
 			movies: [

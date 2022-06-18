@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import VideoView from '@/views/VideoView.vue';
+
+import HomeView from '@/views/Home.vue';
+import ItemView from '@/views/ItemView.vue';
+import Library from '@/views/Library.vue';
+import Session from '@/views/Session.vue';
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,9 +14,21 @@ const router = createRouter({
 			component: HomeView
 		},
 		{
-			path: '/video',
-			name: 'video',
-			component: VideoView
+			path: '/library/',
+			name: 'library',
+			component: Library
+		},
+		{
+			path: '/library/:media_id',
+			name: 'item',
+			component: ItemView,
+			props: true
+		},
+		{
+			path: '/session/:session_id',
+			name: 'session',
+			component: Session,
+			props: true
 		}
 	]
 })

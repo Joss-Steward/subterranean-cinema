@@ -16,7 +16,8 @@ start(_StartType, _StartArgs) ->
         {
             <<"127.0.0.1">>,
             [
-				{<<"/session/[:id]">>, session_http_handler, []},
+				{<<"/api/session/[:id]">>, session_http_handler, []},
+				{<<"/api/media">>, http_handler_media_collection, []},
 				{<<"/api/media/[:id]">>, media_http_handler, []},
                 {<<"/join/[:id]">>, viewer_websocket_handler, []},
                 {

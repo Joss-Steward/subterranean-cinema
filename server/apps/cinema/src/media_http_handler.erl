@@ -13,7 +13,7 @@ good_request(Response, Request) ->
 	cowboy_req:reply(200, response_headers(), Response, Request).
 
 response_headers() -> #{
-		<<"content-type">> => <<"text/plain">>
+		<<"content-type">> => <<"application/json">>
 	}.
 
 media_list_to_json(MediaList) ->

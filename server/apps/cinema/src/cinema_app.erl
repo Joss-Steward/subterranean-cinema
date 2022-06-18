@@ -17,7 +17,7 @@ start(_StartType, _StartArgs) ->
             <<"127.0.0.1">>,
             [
 				{<<"/session/[:id]">>, session_http_handler, []},
-				{<<"/media/[:id]">>, media_http_handler, []},
+				{<<"/api/media/[:id]">>, media_http_handler, []},
                 {<<"/join/[:id]">>, viewer_websocket_handler, []},
                 {
                     <<"/">>, cowboy_static, {priv_file, theatre, "static/index.html"}
@@ -31,7 +31,10 @@ start(_StartType, _StartArgs) ->
     {ok, _} = cowboy:start_clear(
         ?MODULE,
         [{port, 8080}],
-        #{env => #{dispatch => Dispatch}}
+        #{
+			env => #{dispatch => Dispatch},
+			middlewares => [http_middleware_cors, cowboy_router, cowboy_handler]
+		}
     ),
     cinema_sup:start_link().
 

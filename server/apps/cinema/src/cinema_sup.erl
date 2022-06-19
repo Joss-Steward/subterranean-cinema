@@ -33,6 +33,11 @@ init([]) ->
     },
     ChildSpecs = [
         #{
+			id => snowflake, 
+			start => { snowflake, start_link, [] }, 
+			restart => permanent
+		},
+        #{
             id => session_manager,
             start => { session_manager, start_link, [] },
             restart => permanent

@@ -16,9 +16,9 @@ start(_StartType, _StartArgs) ->
         {
             <<"127.0.0.1">>,
             [
-				{<<"/api/session/[:id]">>, session_http_handler, []},
-				{<<"/api/media">>, http_handler_media_collection, []},
+				{<<"/api/session/[:id]">>, http_handler_session_collection, []},
 				{<<"/api/media/[:id]">>, media_http_handler, []},
+				{<<"/api/media">>, http_handler_media_collection, []},
                 {<<"/join/[:id]">>, viewer_websocket_handler, []},
                 {
                     <<"/">>, cowboy_static, {priv_file, theatre, "static/index.html"}

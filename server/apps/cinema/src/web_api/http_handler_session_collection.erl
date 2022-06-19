@@ -1,4 +1,4 @@
--module(session_http_handler).
+-module(http_handler_session_collection).
 -behaviour(cowboy_handler).
 
 -export([init/2]).

@@ -1,6 +1,9 @@
 -module(media_manager).
 -behaviour(gen_server).
 
+-include("media_records.hrl").
+-include_lib("kernel/include/logger.hrl").
+
 %% gen_server exports
 -export([start_link/0, init/1, handle_call/3, handle_cast/2]).
 
@@ -10,43 +13,57 @@
 -define(TABLE_NAME, ?MODULE).
 -define(SERVER_NAME, ?MODULE).
 
-%% public API
+%% public API %%
 
-add(Metadata) ->
-	gen_server:call(?SERVER_NAME, {add, Metadata}).
+add({Title, Runtime, Stream}) ->
+	gen_server:call(?SERVER_NAME, {add, {Title, Runtime, Stream}}).
 
-get(MediaID) ->
-	gen_server:call(?SERVER_NAME, {get, MediaID}).
+get(all) ->
+	gen_server:call(?SERVER_NAME, {get, all});
+get({id, MediaID}) ->
+	gen_server:call(?SERVER_NAME, {get, {id, MediaID}}).
 
-delete(MediaID) ->
-	gen_server:cast(?SERVER_NAME, {delete, MediaID}).
+delete({id, MediaID}) ->
+	gen_server:cast(?SERVER_NAME, {delete, {id, MediaID}}).
 
-%% gen_server callbacks
+%% gen_server callbacks %%
 
 start_link() ->
     gen_server:start_link({local, ?SERVER_NAME}, ?MODULE, [], []).
 
-init(_) ->
-	Table = ets:new(?TABLE_NAME, [set, named_table]),
-	ets:insert(?TABLE_NAME, {<<"111A">>, #{
-		title => <<"A March Wedding">>,
-		runtime => 65000,
-		stream_url => <<"/media/march.mp4">>
-	}}),
-	ets:insert(?TABLE_NAME, {<<"111B">>, #{
-		title => <<"Fantastic Four">>,
-		runtime => 48751,
-		stream_url => <<"/media/ballard.mp4">>
-	}}),
-	{ok, #{table => Table}}.
+init(State) ->
+	install([node()]),
+	{ok, State}.
 
-handle_call({add, Metadata}, _, State) ->
-	MediaID = create_media_id(Metadata),
-	add_media(MediaID, Metadata),
-	{reply, {ok, MediaID}, State};
-handle_call({get, MediaID}, _, State) ->
-	Info = get_media(MediaID),
-	{reply, Info, State}.
+install(Nodes) ->
+	case mnesia:create_schema(Nodes) of
+		{error, {Node, {already_exists, Node}}} ->
+			?LOG_INFO(#{message => "mnesia schema already exists on node", node => Node}),
+			ok;
+		ok -> ok
+	end,
+	rpc:multicall(Nodes, application, start, [mnesia]),
+	case mnesia:create_table(media_item, 
+		[{attributes, record_info(fields, media_item)},
+		 {disc_copies, Nodes}]) of
+			{atomic, ok} -> 
+				?LOG_INFO(#{message => "mnesia table created successfully"}),
+				ok;
+			{aborted, {already_exists, _}} -> 
+				?LOG_INFO(#{message => <<"media mnesia table already exists">>}),
+				ok;
+			{aborted, Reason} -> 
+				?LOG_ERROR(#{message => <<"could not create media mnesia table">>, reason => Reason})
+		end.
+
+handle_call({add, MediaData}, _, State) ->
+	{reply, add_media(MediaData), State};
+handle_call({get, Req}, _, State) ->
+	Info = get_media(Req),
+	{reply, Info, State};
+handle_call(Call, Pid, State) ->
+	?LOG_ERROR(#{message => "invalid call received", call => Call, from => Pid}),
+	{noreply, State}.
 
 handle_cast({delete, MediaID}, State) ->
 	delete_media(MediaID),
@@ -54,28 +71,41 @@ handle_cast({delete, MediaID}, State) ->
 handle_cast(_, State) ->
 	{noreply, State}.
 
-%% interal API
+%% interal API %%
 
 get_media(all) ->
-	ets:match_object(?TABLE_NAME, {'$0', '$1'});
-get_media(MediaID) ->
-	case ets:lookup(?TABLE_NAME, MediaID) of
-		[{MediaID, Info}] -> {ok, Info};
-		[] -> none
-	end.
+	GetAll = fun() ->
+		MatchHead = #media_item{id='$1', title='$2', runtime='$3', stream='$4'},
+		Return =['$_'],
+		mnesia:select(media_item, [{MatchHead, [], Return}], read)
+	end,
+	{atomic, MediaList} = mnesia:transaction(GetAll),
+	{ok, MediaList};
+get_media({id, MediaID}) ->
+	GetAll = fun() ->
+		MatchItem = #media_item{id=MediaID, title='_', runtime='_', stream='_'},
+		mnesia:match_object(MatchItem)
+	end,
+	{atomic, MediaList} = mnesia:transaction(GetAll),
+	{ok, MediaList}.
 
-add_media(MediaID, #{title := Title, runtime := Runtime, stream_url := StreamURL}) ->
-	Metadata = #{
-		title => Title,
-		runtime => Runtime,
-		stream_url => StreamURL
+add_media({Title, Runtime, Stream}) ->
+	{ok, Id} = snowflake:new(),
+	MediaRecord = #media_item{
+		id = Id,
+		title = Title,
+		runtime = Runtime,
+		stream = Stream
 	},
-	ets:insert(?TABLE_NAME, {MediaID, Metadata}).
+	Insert = fun() ->
+		mnesia:write(MediaRecord)
+	end,
+	{atomic, ok} = mnesia:transaction(Insert),
+	{ok, Id}.
 
-delete_media(MediaID) ->
-	ets:delete(?TABLE_NAME, MediaID).
-
-create_media_id(Metadata) ->
-	MediaID = erlang:phash2({Metadata, erlang:monotonic_time()}),
-	MediaIdHex = integer_to_list(MediaID, 16),
-	list_to_binary(MediaIdHex).
+delete_media({id, MediaID}) ->
+	GetAll = fun() ->
+		mnesia:delete({media_item, MediaID})
+	end,
+	{atomic, _} = mnesia:transaction(GetAll),
+	ok.

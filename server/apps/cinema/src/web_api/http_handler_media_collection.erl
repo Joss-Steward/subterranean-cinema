@@ -1,6 +1,8 @@
 -module(http_handler_media_collection).
 -behaviour(cowboy_handler).
 
+-include("../media/media_records.hrl").
+
 %% REST Callbacks
 -export([init/2]).
 -export([allowed_methods/2]).
@@ -25,30 +27,24 @@ content_types_accepted(Req, State) ->
 		{{<<"application">>, <<"json">>, []}, from_json}
 	], Req, State}.
 
-from_json(Req, State) ->
-    case middleware:auth(Req) of
-        {true, User, Req1} ->
-            Fname = maps:get(fname, User),
-            Lname = maps:get(lname, User),
-            Message = [hello,  <<"Good day, ", Fname/binary, " ", Lname/binary>>];
-        {false, Req1} ->
-            Message = [hello, <<"Good day">>]
-    end,
-    {jiffy:encode(Message), Req1, State}.
+from_json(Req0, State) ->
+	{ok, Body, Req1} = cowboy_req:read_body(Req0, #{length => 100000, period => 5000}),
+	BodyMap = jsx:decode(Body),
+	Stream = maps:get(<<"stream_url">>, BodyMap),
+	Title = maps:get(<<"title">>, BodyMap),
+	Runtime = maps:get(<<"runtime">>, BodyMap),
+	{ok, Id} = media_manager:add({Title, Runtime, Stream}),
+	BasePath = cowboy_req:path(Req0),
+	ResourceURL = [BasePath, <<"/">>, Id],
+    {{created, ResourceURL}, Req1, State}.
 
 to_json(Req, State) ->
-	Media = media_manager:get(all),
-	Body = jsx:encode(media_list_to_json(Media)),
+	{ok, MediaListRecords} = media_manager:get(all),
+	MediaList = [#{
+		id => Item#media_item.id,
+		runtime => Item#media_item.runtime,
+		stream_url => Item#media_item.stream,
+		title => Item#media_item.title
+	} || Item <- MediaListRecords ],
+	Body = jsx:encode(MediaList),
     {Body, Req, State}.
-
-media_list_to_json(MediaList) ->
-	[ #{
-		id => MediaId,
-		runtime => Runtime,
-		stream_url => StreamURL,
-		title => Title
-	} || {MediaId, 
-		#{runtime := Runtime, 
-			stream_url := StreamURL, 
-			title := Title}
-		} <- MediaList ].

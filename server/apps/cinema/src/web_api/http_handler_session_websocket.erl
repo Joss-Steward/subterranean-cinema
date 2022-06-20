@@ -1,4 +1,4 @@
--module(viewer_websocket_handler).
+-module(http_handler_session_websocket).
 -behaviour(cowboy_handler).
 
 -export([init/2, websocket_init/1, websocket_handle/2, websocket_info/2]).

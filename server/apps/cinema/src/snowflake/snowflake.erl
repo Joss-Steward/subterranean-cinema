@@ -50,7 +50,7 @@ handle_call(get_id, _, State) ->
 	{reply, {ok, Id}, NewState};
 handle_call(Call, _, State) ->
 	?LOG_ERROR("invalid call received", #{call => Call}),
-	{noreply, State}.
+	{reply, false, State}.
 
 handle_cast(Cast, State) ->
 	?LOG_ERROR("invalid cast received", #{cast => Cast}),

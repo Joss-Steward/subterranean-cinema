@@ -1,0 +1,1 @@
+-record(media_item, {id, title, runtime, stream}).
